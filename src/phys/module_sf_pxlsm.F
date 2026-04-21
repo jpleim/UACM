@@ -439,6 +439,8 @@ CONTAINS
          LAND_USE_TYPE = 'USGS28'
       ELSE IF (NLCAT == 51) THEN
          LAND_USE_TYPE = 'NLCD51'
+      ELSE IF (NLCAT == 33) THEN
+         LAND_USE_TYPE = 'MODISF'
       ELSE
          call wrf_error_fatal("Error: Unknown Land Use Category")
       END IF 
@@ -598,7 +600,7 @@ CONTAINS
               endif
               BB1 = blkw1(i,J) +20.  ! WST = 20. which is subtract in SURFPX
               BB2 = blkw2(i,J) +20.
-            ELSE   ! No LCZ
+            ELSE IF(LAND_USE_TYPE=='NLCD40')then   ! No LCZ
               IF(HGTBDG(I,J) .LT. 0.1) THEN
                 HGTBDG(I,J) = (10.*LANDUSEF(I,24,J)+ 20.*LANDUSEF(I,25,J)+ 50.*LANDUSEF(I,26,J))/URBF2D(I,J)
                 LAMP(I,J)   = (0.15*LANDUSEF(I,24,J)+ 0.25*LANDUSEF(I,25,J)+ 0.4*LANDUSEF(I,26,J))/URBF2D(I,J)
@@ -606,8 +608,20 @@ CONTAINS
               ENDIF
               BB1 = blkw1(i,J)*(1-LANDUSEF(I,KWAT,J))
               BB2 = blkw2(i,J)*(1-LANDUSEF(I,KWAT,J))
+            ELSE IF (LAND_USE_TYPE=='MODISF')then 
+              STDIR1(I,J) = 10
+              STDIR2(I,J) = 100 
+              HGTBDG(I,J) = (10.*LANDUSEF(I,31,J)+ 10.*LANDUSEF(I,33,J)+ 25.*LANDUSEF(I,32,J))/URBF2D(I,J)
+              LAMP(I,J)   = (0.2*LANDUSEF(I,31,J)+ 0.3*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+              LAMF(I,J)   = (0.08*LANDUSEF(I,31,J)+ 0.1*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+              blkw1(i,J) = (140.*LANDUSEF(I,31,J)+ 70.*LANDUSEF(I,33,J)+ 90.*LANDUSEF(I,32,J))/URBF2D(I,J)
+              blkw2(i,J)  = (100.*LANDUSEF(I,31,J)+ 180*LANDUSEF(I,33,J)+ 60.*LANDUSEF(I,32,J))/URBF2D(I,J)
+                
+            ELSE
+               STOP 'urban not set up for landuse'
+            
             ENDIF
-            PPLN_FNL(I,J)  = HGTBDG(I,J) * LAMP(I,J) * 4444.4 ! p/km2
+            PPLN_FNL(I,J)  = HGTBDG(I,J) * LAMP(I,J) * 5555.56  !Changed height per floor from 5m to 4m ! p/km2
             VEGU_FNL(I,J)  = (0.15*LANDUSEF(I,24,J)+ 0.05*LANDUSEF(I,25,J)+ 0.01*LANDUSEF(I,26,J))/URBF2D(I,J)
           ENDIF
 
@@ -1014,7 +1028,7 @@ CONTAINS
                                             LAIMN0, SNUP0, ALBF, SNOALBF
 
       !---- INITIALIZE PARAMETERS
-      INTEGER, SAVE :: KWAT, LIMIT1, LIMIT2
+      INTEGER, SAVE :: KWAT, KWATL, LIMIT1, LIMIT2
 
       !-- DDY urban
       REAL, DIMENSION(its:ite, jts:jte), INTENT(INOUT) :: URBF2D
@@ -1029,6 +1043,7 @@ CONTAINS
      ! Initialize LU characteristics by LU Dataset
       IF (LAND_USE_TYPE == 'USGS') THEN
          KWAT = 16
+         KWATL = KWAT
          RSMIN  => RSMIN_USGS
          Z00    => Z00_USGS  
          VEG0   => VEG0_USGS 
@@ -1042,6 +1057,7 @@ CONTAINS
          LIMIT1 = 6
       ELSE IF (LAND_USE_TYPE == 'USGS28') THEN
          KWAT = 16
+         KWATL = KWAT
          RSMIN  => RSMIN_USGS28
          Z00    => Z00_USGS28  
          VEG0   => VEG0_USGS28 
@@ -1055,6 +1071,7 @@ CONTAINS
          LIMIT1 = 6
       ELSE IF (LAND_USE_TYPE == 'NLCD50') THEN
          KWAT = 1
+         KWATL = KWAT
          RSMIN  => RSMIN_NLCD50
          Z00    => Z00_NLCD50  
          VEG0   => VEG0_NLCD50 
@@ -1068,6 +1085,7 @@ CONTAINS
          LIMIT1 = 43
       ELSE IF (LAND_USE_TYPE == 'NLCD40') THEN
          KWAT = 17
+         KWATL = 21 
          RSMIN  => RSMIN_NLCD40
          Z00    => Z00_NLCD40  
          VEG0   => VEG0_NLCD40 
@@ -1081,6 +1099,7 @@ CONTAINS
          LIMIT1 = 43
       ELSE IF (LAND_USE_TYPE == 'NLCD51') THEN
          KWAT = 17
+         KWATL = 21
          RSMIN  => RSMIN_NLCD51
          Z00    => Z00_NLCD51  
          VEG0   => VEG0_NLCD51 
@@ -1095,6 +1114,7 @@ CONTAINS
          NLCATX  = 40
       ELSE IF (LAND_USE_TYPE == 'MODIS') THEN
          KWAT = 17
+         KWATL = 21
          RSMIN  => RSMIN_MODIS
          Z00    => Z00_MODIS  
          VEG0   => VEG0_MODIS 
@@ -1106,6 +1126,20 @@ CONTAINS
          SNOALBF=> SNOALB_MODIS
          LIMIT1 = 12
          LIMIT1 = 14
+       ELSE IF (LAND_USE_TYPE == 'MODISF') THEN
+         KWAT = 17
+         KWATL = 21
+         RSMIN  => RSMIN_MODIS_FR
+         Z00    => Z00_MODIS_FR  
+         VEG0   => VEG0_MODIS_FR 
+         VEGMN0 => VEGMN0_MODIS_FR 
+         LAI0   => LAI0_MODIS_FR 
+         LAIMN0 => LAIMN0_MODIS_FR 
+         SNUP0  => SNUP0_MODIS_FR 
+         ALBF   => ALBF_MODIS_FR
+         SNOALBF=> SNOALB_MODIS_FR
+         LIMIT1 = 12
+         LIMIT1 = 14        
       END IF
 
       KWAT_OUT = KWAT
@@ -1140,7 +1174,11 @@ CONTAINS
             LUTOT = LUTOT + LANDUSEF(I,K,J)
           ENDDO
           IF (LUTOT .GT. 0.0) THEN
-            URBF = (LANDUSEF(I,24,J)+LANDUSEF(I,25,J)+LANDUSEF(I,26,J))/LUTOT  !-Only for NLCD40 here.
+            IF(LAND_USE_TYPE == 'NLCD40') THEN
+              URBF = (LANDUSEF(I,24,J)+LANDUSEF(I,25,J)+LANDUSEF(I,26,J))/LUTOT  !-Only for NLCD40 here.
+            ELSE IF(LAND_USE_TYPE == 'MODISF') THEN
+              URBF = (LANDUSEF(I,31,J)+LANDUSEF(I,32,J)+LANDUSEF(I,33,J))/LUTOT 
+            ENDIF
             IF(URBF.GT.0.05) URBF2D(I,J) = URBF
           ENDIF
 
@@ -1162,10 +1200,16 @@ CONTAINS
               Z0(1)  = Z0ST 
             ELSE IF (LAND_USE_TYPE == 'USGS28') THEN
               Z0(1)  = Z0ST
-            ELSE  !  NLCD40
+            ELSE IF(LAND_USE_TYPE == 'NLCD40') THEN  
               Z0(24) = Z0ST
               Z0(25) = Z0ST
               Z0(26) = Z0ST
+            ELSE IF(LAND_USE_TYPE == 'MODISF') THEN  
+              Z0(31) = Z0ST
+              Z0(32) = Z0ST
+              Z0(33) = Z0ST
+            ELSE
+               STOP 'Landuse not set up for UACM
             ENDIF
           ENDIF
 
@@ -1187,7 +1231,7 @@ CONTAINS
           VEGF   = VEGFRA(I,J) 
                 
           !-- Computations for VEGETATION CELLS ONLY
-          IF(VFMX.GT.0.0.AND.LANDUSEF(I,KWAT,J).LT.1.00) THEN
+          IF(VFMX.GT.0.0.AND.LANDUSEF(I,KWAT,J).LT.1.00.and.LANDUSEF(I,KWATL,J).LT.1.00) THEN
             VSEAS = VEGF/VFMX
             IF(VSEAS.GT.1.0.OR.VSEAS.LT.0.0) THEN
               VSEAS = MIN(VSEAS,1.0)
@@ -1196,7 +1240,7 @@ CONTAINS
 
             ZNOTC = ZNOTCMN * (1-VSEAS) + ZNOTCMX * VSEAS  ! Zo FOR CROPS
             DO K = 1, NLCATX
-              IF (LAND_USE_TYPE == 'MODIS') THEN
+              IF (LAND_USE_TYPE == 'MODIS'.or.LAND_USE_TYPE == 'MODISF') THEN
                 !-- USE THE VEGFRAC DATA ONLY FOR CROPS
                 IF (K.EQ.12 .OR. K.EQ.14) THEN
                    LAIMX(K) = LAIMN0(K) * (1-VSEAS) + LAI0(K) * VSEAS
@@ -1338,7 +1382,7 @@ CONTAINS
             WETFRA(I,J) = LANDUSEF(I,22,J)+LANDUSEF(I,23,J)+LANDUSEF(I,27,J)+LANDUSEF(I,28,J)+LANDUSEF(I,42,J)
           ELSE IF (LAND_USE_TYPE == 'NLCD40'.or.LAND_USE_TYPE == 'NLCD51') THEN
             WETFRA(I,J) = LANDUSEF(I,39,J)+LANDUSEF(I,40,J)+LANDUSEF(I,11,J)
-          ELSE IF (LAND_USE_TYPE == 'MODIS') THEN
+          ELSE IF (LAND_USE_TYPE == 'MODIS'.or.LAND_USE_TYPE == 'MODISF') THEN
             WETFRA(I,J) = LANDUSEF(I,11,J)
           END IF
 
@@ -1667,7 +1711,8 @@ CONTAINS
       REAL, PARAMETER :: CSTH      = 5.3
       REAL, PARAMETER :: Z0RT      = 0.05                ! Building roof roughness length (m)
       REAL, PARAMETER :: KARMAN    = 0.4 
-      REAL, PARAMETER :: PPLNNYC   = 10430.   ! NYC pop den Sailor et al 2015
+!      REAL, PARAMETER :: PPLNNYC   = 10430.   ! NYC pop den Sailor et al 2015
+      REAL, PARAMETER :: PPLNCITY   = 3550.   ! Paris pop den Sailor et al 2015
       REAL, PARAMETER :: Qfmax     = 63.      ! NYC
       REAL, PARAMETER :: Fveh      = 0.39
       REAL, DIMENSION(24) :: ProHr    ! Summer
@@ -1856,7 +1901,7 @@ CONTAINS
           ELSE 
             ProFac = ProHr(24) + (LHR-24.) * (ProHr(1)-ProHr(24))
           ENDIF
-          ANTHFX1   =   0.5* (PPLN / PPLNNYC * (1.-Fveh) +  Fveh) * ProFac * Qfmax
+          ANTHFX1   =   0.5* (PPLN / PPLNCITY * (1.-Fveh) +  Fveh) * ProFac * Qfmax
           ANTHFX_RF = ANTHFX1
 !          if(HGTBDG.gt.120.0) then
 !             print *,' LHR,ProFac,PPLN,ANTHFX1=',LHR,ProFac,PPLN,ANTHFX1
