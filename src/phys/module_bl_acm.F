@@ -457,8 +457,13 @@ CONTAINS
             LUTOT = LUTOT + LANDUSEF(I,NL)
           ENDDO
           IF (LUTOT .GT. 0.0) THEN
-!            URBF(I) = LANDUSEF(I,1)/LUTOT
-            URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT  !-Only for NLCD40 here. 
+            IF(NLCAT.EQ.40) THEN
+              URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT
+            ELSE IF(NLCAT.EQ.33) THEN
+              URBF(I) = (LANDUSEF(I,31)+LANDUSEF(I,32)+LANDUSEF(I,33))/LUTOT   
+            ELSE
+              STOP ' NLCAT SHOULD BE 40 OR 33'
+            ENDIF
           ENDIF
           IF(URBF(I).LT.0.05) URBF(I)=-1.0
         ENDDO
@@ -1216,7 +1221,13 @@ CONTAINS
         ENDDO
         IF (LUTOT .GT. 0.0) THEN
 !          URBF(I) = LANDUSEF(I,1)/LUTOT
-          URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT  !-Only for NLCD40 here. 
+          IF(NLCAT.EQ.40) THEN
+            URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT  !-Only for NLCD40 here. 
+          ELSE IF (NLCAT.EQ.33) THEN
+            URBF(I) = (LANDUSEF(I,31)+LANDUSEF(I,32)+LANDUSEF(I,33))/LUTOT 
+          ELSE
+            STOP ' must be NLCD40 or MODISF '
+          ENDIF
         ENDIF
         IF(URBF(I).LT.0.05) URBF(I)=-1.0
         !-- Estimation of the Urban canopy height level (Model-level)
@@ -2202,16 +2213,22 @@ CONTAINS
           !--DDY urban calculate urban fractions for USGS-landuse only (NOW)
           URBF(I) = 0.0
           LUTOT   = 0.0
-          DO NL = 1,  40   !NLCAT
+          DO NL = 1,  NLCAT
             LUTOT = LUTOT + LANDUSEF(I,NL)
           ENDDO
           IF (LUTOT .GT. 0.0) THEN
-!            URBF(I) = LANDUSEF(I,1)/LUTOT
-            URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT  !-Only for NLCD40 here. 
-            FWAT = LANDUSEF(I,KWAT)
+            IF(NLCAT.EQ.40) THEN
+              URBF(I) = (LANDUSEF(I,24)+LANDUSEF(I,25)+LANDUSEF(I,26))/LUTOT  !-Only for NLCD40 here. 
+              FWAT = LANDUSEF(I,KWAT)
+            ELSE IF(NLCAT.EQ.33) THEN       ! CORINE-MODIS
+              URBF(I) = (LANDUSEF(I,31)+LANDUSEF(I,32)+LANDUSEF(I,33))/LUTOT  !-Only for NLCD40 here. 
+              FWAT = LANDUSEF(I,KWAT)  
+            ELSE
+              STOP ' LU must be NLCD40 or NLCD51 or CORINE-MODIS 33'
+            ENDIF
           ENDIF
           IF(URBF(I).LT.0.05.OR.FWAT.GT.0.5) URBF(I)=-1.0
-          IF( NLCAT.EQ.40) then 
+          IF( NLCAT.EQ.40.OR.NLCAT.EQ.33) then 
             LCZRUN = .FALSE.
           ELSE IF ( NLCAT.EQ.51) then
             LCZRUN = .TRUE.
