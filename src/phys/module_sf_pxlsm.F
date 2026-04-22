@@ -1209,7 +1209,7 @@ CONTAINS
               Z0(32) = Z0ST
               Z0(33) = Z0ST
             ELSE
-               STOP 'Landuse not set up for UACM
+               STOP 'Landuse not set up for UACM'
             ENDIF
           ENDIF
 
