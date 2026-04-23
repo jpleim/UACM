@@ -50,7 +50,7 @@ CONTAINS
                     PXLSM_SOIL_NUDGE,                                    &
                     cosz, XLAT, XLONG, SINA, COSA,                       &   !-- DDY Urban
                     LAMP, HGTBDG, lamf,                                  &
-                    STDIR1,STDIR2,BLKW1,BLKW2,                           &
+                    STDIR1,STDIR2,BLKW1,BLKW2,StWd,                      &
                     SWDDIR, SWDDIF,                                      &   !-- UTK Urban
                     pxlsm_modis_veg, ifuacm,                             &
                     LAI_PX,                                              &
@@ -331,7 +331,7 @@ CONTAINS
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)    :: COSZ
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: HGTBDG, LAMP, LAMF
    INTEGER, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: STDIR1, STDIR2
-   REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT)    :: BLKW1, BLKW2
+   REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT)    :: BLKW1, BLKW2, StWd
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TG_RF, RADST, RADST_FNL, GSW_URB
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TG_WL, RADWL, RADWL_FNL, GSW_WL
    DOUBLE PRECISION,  DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) ::T2_RF,T2_WL,T2_GND
@@ -608,15 +608,21 @@ CONTAINS
               ENDIF
               BB1 = blkw1(i,J)*(1-LANDUSEF(I,KWAT,J))
               BB2 = blkw2(i,J)*(1-LANDUSEF(I,KWAT,J))
+              VEGU_FNL(I,J)  = (0.15*LANDUSEF(I,24,J)+ 0.05*LANDUSEF(I,25,J)+ 0.01*LANDUSEF(I,26,J))/URBF2D(I,J)              
             ELSE IF (LAND_USE_TYPE=='MODISF')then 
-              STDIR1(I,J) = 10
-              STDIR2(I,J) = 100 
-              HGTBDG(I,J) = (10.*LANDUSEF(I,31,J)+ 10.*LANDUSEF(I,33,J)+ 25.*LANDUSEF(I,32,J))/URBF2D(I,J)
+              IF(HGTBDG(I,J) .LT. 0.1) THEN
+                STDIR1(I,J) = 10
+                STDIR2(I,J) = 100 
+                HGTBDG(I,J) = (10.*LANDUSEF(I,31,J)+ 10.*LANDUSEF(I,33,J)+ 25.*LANDUSEF(I,32,J))/URBF2D(I,J)
+!                LAMF(I,J)   = (0.08*LANDUSEF(I,31,J)+ 0.1*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+                blkw1(i,J) = (140.*LANDUSEF(I,31,J)+ 70.*LANDUSEF(I,33,J)+ 90.*LANDUSEF(I,32,J))/URBF2D(I,J)
+                blkw2(i,J)  = (100.*LANDUSEF(I,31,J)+ 180*LANDUSEF(I,33,J)+ 60.*LANDUSEF(I,32,J))/URBF2D(I,J)
+                StWd(i,j)   = (12.*LANDUSEF(I,31,J)+ 12*LANDUSEF(I,33,J)+ 15.*LANDUSEF(I,32,J))/URBF2D(I,J)
+              ENDIF
               LAMP(I,J)   = (0.2*LANDUSEF(I,31,J)+ 0.3*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
-              LAMF(I,J)   = (0.08*LANDUSEF(I,31,J)+ 0.1*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
-              blkw1(i,J) = (140.*LANDUSEF(I,31,J)+ 70.*LANDUSEF(I,33,J)+ 90.*LANDUSEF(I,32,J))/URBF2D(I,J)
-              blkw2(i,J)  = (100.*LANDUSEF(I,31,J)+ 180*LANDUSEF(I,33,J)+ 60.*LANDUSEF(I,32,J))/URBF2D(I,J)
-                
+              BB1 = blkw1(i,J)*(1-LANDUSEF(I,KWAT,J))
+              BB2 = blkw2(i,J)*(1-LANDUSEF(I,KWAT,J))
+              VEGU_FNL(I,J)  = (0.35*LANDUSEF(I,31,J)+ 0.05*LANDUSEF(I,33,J)+ 0.05*LANDUSEF(I,32,J))/URBF2D(I,J)
             ELSE
                STOP 'urban not set up for landuse'
             
@@ -922,7 +928,7 @@ CONTAINS
                         LWDN_WL(I,J), LWUP_URB(I,J), LWUP_RF(I,J), LWUP_WL(I,J),                           & !out --UTK-Urban
                         SMOIS(I,1,J), SMOIS(I,2,J), WR, WR_ST, WR_VEG, WR_RF,                              & !out --UTK-Urban
                         TA2(I,J), QA2(I,J), LAND_USE_TYPE, I, J,                                           &
-                        HGTBDG(I,J), LAMP(I,J), LAMF(I,J), STDIR1(I,J), STDIR2(I,J), BB1, BB2,             & !    --UTK Urban
+                        HGTBDG(I,J), LAMP(I,J), LAMF(I,J), STDIR1(I,J), STDIR2(I,J), BB1, BB2,StWd(I,J),   & !    --UTK Urban
                         PPLN_FNL(I,J), VEGU_FNL(I,J), KSL(I,J), SWDDIR(I,J), SWDDIF(I,J),                  &
                         GAB_RF(I,J),GAB_WL(I,J)                                                            ) !    --UTK Urban
             !-------------------------------------------------------------------------
@@ -1444,7 +1450,7 @@ CONTAINS
                         LWDN_WL, LWUP_URB, LWUP_RF, LWUP_WL,                    & !out UTK Urban  
                         WG, W2, WR, WR_ST, WR_VEG, WR_RF,                       & !out
                         TA2, QA2, LAND_USE_TYPE, I, J,                          & !out
-                        HGTBDG, LAMP, LAMF, STDIR1, STDIR2, BB1, BB2,           & !-- UTK Urban in
+                        HGTBDG, LAMP, LAMF, STDIR1, STDIR2, BB1, BB2,WSTT,      & !-- UTK Urban in
                         PPLN, VEGU,KSL, SWDDIR, SWDDIF,GAB_RF,GAB_WL            ) !-- UTK Urban in
 
 !------------------------------------------------------------------------------
@@ -1607,7 +1613,7 @@ CONTAINS
       !-- DDY and UTK Urban
       REAL, INTENT(IN) :: URBF, COSZ, XLATIJ, XLONIJ, SINAIJ, COSAIJ, CURR_SECS, ALB
       REAL :: SXLONG, DA, XT24, TLOCTM, ARGU, CSZA
-      REAL :: WSTT, BBDG, TANZ
+      REAL :: BBDG, TANZ
       REAL :: AZMA    ! Solar azimuth angle 
       REAL :: HRA     ! Hour angle in degrees
       REAL :: DECLN   ! Declination angle
@@ -1641,6 +1647,7 @@ CONTAINS
       INTEGER, INTENT(IN) :: STDIR2       ! 2nd Dominant street angle (canyon orientation)
       REAL, INTENT(INOUT) :: BB1             ! Block width between streets in STDIR1 direction
       REAL, INTENT(INOUT) :: BB2             ! Block width between streets in STDIR2 direction
+      REAL, INTENT(IN) :: WSTT
       REAL, INTENT(IN) :: PPLN            ! Population density  
       REAL, INTENT(IN) :: VEGU            ! veg frac in Urban part
       REAL :: SKVFRD                      ! Sky view factor for canyon road
@@ -1747,13 +1754,23 @@ CONTAINS
 !          WSTT = (1.0 / SQRT(LAMP) - 1.0) * BBDG        ! Indv. Street Width
 !          WSTT = MIN(WSTT, 40.)                         ! max street width
 !          WSTT = MAX(WSTT, 10.)                         ! min street width
-          WSTT = 20.0
+!          WSTT = 20.0
           BW1 = max(BB1-WSTT,10.)
           BW2 = max(BB2-WSTT,10.)
 !          RBPW = 1.0 / (BBDG + WSTT)     
           RBPW1   = 1.0 / (BW1 + WSTT)
           RBPW2   = 1.0 / (BW2 + WSTT)    
 !         RBPW = 1.0 / (BBDG + WSTT)
+        !--------------------------------------------------------------------------
+        !--Computation of Roof fraction, street fraction and Veg fraction area for
+        !---an urban grid cell
+        !-------------------------------------------
+        ! The street fraction area is calculated by subtracting urban plan area index from 1.0.
+        ! And consequently, the vegetation fraction area and soil fraction area are obtained too.
+           RFFA    = LAMP
+           VEGFA   = VEGU
+!         STFA    = MAX(1.0 - LAMP - VEGU,0.0)
+           STFA     =   WSTT*(RBPW1 + RBPW2 -WSTT*RBPW2*RBPW1)
         ENDIF
 
 
@@ -1810,25 +1827,9 @@ CONTAINS
           W2     = AMAX1(SM2, W2)                        ! In case that W2 > Field capacity (heavy precip), use wetter W2
         ENDIF
 
-        !--------------------------------------------------------------------------
-        !--Computation of Roof fraction, street fraction and Veg fraction area for
-        !---an urban grid cell
-        !-------------------------------------------
-        ! The street fraction area is calculated by subtracting urban plan area index from 1.0.
-        ! And consequently, the vegetation fraction area and soil fraction area are obtained too.
-        IF (ISPXURB .AND. (URBF .GT. 0.0)) THEN  
-          RFFA    = LAMP
-!          STVEGFA = 1.0 - LAMP
-!          VEGFA   = VEGFRC
-!          STFA    = 1.0 - VEGFA
-          VEGFA   = VEGU
-          STFA    = MAX(1.0 - LAMP - VEGU,0.0)
-!          WLFA    = LAMF          
-        ENDIF
-
         !--------------------------------------------------------------------
         ! In-canopy resistance  - Erisman et al (1994)
-        Hcan  = ZNT * 10.0
+        Hcan  = ZNT * 10.
         Rinc  = 14.0 * LAI* Hcan / UST
 
         !--------------------------------------------------------------------
@@ -3158,4 +3159,3 @@ CONTAINS
 !------------------------------------------------------------------------------------------
 
 END MODULE module_sf_pxlsm
-
