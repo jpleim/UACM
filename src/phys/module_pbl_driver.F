@@ -154,7 +154,7 @@ CONTAINS
                ,cosz,swdown,ifuacm                                   &
                ,hfx_rf,hfx_wl,qfx_rf                                 &
                ,build_area_fraction, build_height, lamf              &
-               ,stdir1,stdir2,blkw1,blkw2                            &
+               ,stdir1,stdir2,blkw1,blkw2,StWd                       &
                ,UST_WL,UST_RF,UST_ST                                 )  ! ACM2-PBL   ! UTK-Urban
  
 !------------------------------------------------------------------
@@ -797,7 +797,7 @@ CONTAINS
     REAL, INTENT (IN), DIMENSION(ims:ime, jms:jme)           :: HFX_RF, HFX_WL, QFX_RF   ! UTK-Urban
     REAL, INTENT (IN), DIMENSION(ims:ime, jms:jme)           :: build_area_fraction, build_height, lamf
     INTEGER, INTENT (IN), DIMENSION(ims:ime, jms:jme)        :: stdir1,stdir2
-    REAL, INTENT (IN), DIMENSION(ims:ime, jms:jme)           :: blkw1,blkw2 
+    REAL, INTENT (IN), DIMENSION(ims:ime, jms:jme)           :: blkw1,blkw2,StWd 
     REAL, INTENT (OUT), DIMENSION(ims:ime, kms:kme, jms:jme ):: UST_WL
     REAL, INTENT (OUT), DIMENSION(ims:ime, jms:jme)          :: UST_RF,UST_ST
     INTEGER, INTENT(IN   )                                   :: IFUACM
@@ -1625,7 +1625,7 @@ CONTAINS
               ,COSZ=cosz, SWDOWN=swdown, IFUACM=ifuacm                           &
               ,HFX_RF=hfx_rf, HFX_WL=hfx_wl, QFX_RF=qfx_rf                       &   ! UTK-Urban
               ,LAMP=build_area_fraction, BUILD_HEIGHT=build_height, LAMF=lamf    &   ! UTK-Urban
-              ,STDIR1=stdir1, STDIR2=stdir2, BLKW1=blkw1, BLKW2=blkw2            &
+              ,STDIR1=stdir1, STDIR2=stdir2, BLKW1=blkw1, BLKW2=blkw2, STWD=StWd &
               ,UST_WL=UST_WL, UST_RF=UST_RF, UST_ST=UST_ST                       &
               ,IDS=ids,IDE=ide,JDS=jds,JDE=jde,KDS=kds,KDE=kde                   &
               ,IMS=ims,IME=ime,JMS=jms,JME=jme,KMS=kms,KME=kme                   &
