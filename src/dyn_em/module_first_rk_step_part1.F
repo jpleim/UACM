@@ -889,7 +889,7 @@ BENCH_START(surf_driver_tim)
      &        ,BUILD_AREA_FRACTION=grid%build_area_fraction               &   ! P-X LSM  ! UTK-Urban 
      &        ,BUILD_HEIGHT=grid%build_height, LAMF=grid%lamf             &   ! P-X LSM  ! UTK-Urban
      &        ,STDIR1=grid%stdir1, STDIR2=grid%stdir2                     &   ! P-X LSM  ! UTK-Urban
-     &        ,BLKW1=grid%blkw1, BLKW2=grid%blkw2                         &   ! P-X LSM  ! UTK-Urban
+     &        ,BLKW1=grid%blkw1, BLKW2=grid%blkw2, StWd=grid%StWd         &   ! P-X LSM  ! UTK-Urban
            ! SSiB LSM variables (fds 06/2010)
      &        ,alswvisdir=grid%alswvisdir, alswvisdif=grid%alswvisdif    & !ssib
      &        ,alswnirdir=grid%alswnirdir, alswnirdif=grid%alswnirdif    & !ssib
@@ -1342,7 +1342,7 @@ BENCH_START(pbl_driver_tim)
      &        ,BUILD_AREA_FRACTION=grid%build_area_fraction               &  ! ACM2  ! UTK-Urban 
      &        ,BUILD_HEIGHT=grid%build_height, LAMF=grid%lamf             &  ! ACM2  ! UTK-Urban
      &        ,STDIR1=grid%stdir1, STDIR2=grid%stdir2                     &   ! P-X LSM  ! UTK-Urban
-     &        ,BLKW1=grid%blkw1, BLKW2=grid%blkw2                         &   ! P-X LSM  ! UTK-Urban
+     &        ,BLKW1=grid%blkw1, BLKW2=grid%blkw2, StWd=grid%StWd         &   ! P-X LSM  ! UTK-Urban
      &        ,UST_WL=grid%UST_WL,UST_RF=grid%UST_RF, UST_ST=grid%UST_ST  &  ! ACM2  ! UTK-Urban 
      &        )
 
