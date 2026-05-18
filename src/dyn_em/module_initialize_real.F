@@ -227,15 +227,15 @@ integer::oops1,oops2
             geogrid_flag_error = geogrid_flag_error + 1
          END IF
 
-         IF ( ( config_flags%sf_surface_physics .EQ. pxlsmscheme  ) .AND. ( flag_imperv    .EQ. 0 ) ) THEN
-            CALL wrf_message ( '----- ERROR: sf_surface_physics = 7 AND flag_imperv     = 0 ' )
-            geogrid_flag_error = geogrid_flag_error + 1
-         END IF
+!         IF ( ( config_flags%sf_surface_physics .EQ. pxlsmscheme  ) .AND. ( flag_imperv    .EQ. 0 ) ) THEN
+!            CALL wrf_message ( '----- ERROR: sf_surface_physics = 7 AND flag_imperv     = 0 ' )
+!            geogrid_flag_error = geogrid_flag_error + 1
+!         END IF
 
-         IF ( ( config_flags%sf_surface_physics .EQ. pxlsmscheme  ) .AND. ( flag_canfra    .EQ. 0 ) ) THEN
-            CALL wrf_message ( '----- ERROR: sf_surface_physics = 7 AND flag_canfra     = 0 ' )
-            geogrid_flag_error = geogrid_flag_error + 1
-         END IF
+!         IF ( ( config_flags%sf_surface_physics .EQ. pxlsmscheme  ) .AND. ( flag_canfra    .EQ. 0 ) ) THEN
+!            CALL wrf_message ( '----- ERROR: sf_surface_physics = 7 AND flag_canfra     = 0 ' )
+!            geogrid_flag_error = geogrid_flag_error + 1
+!         END IF
 
          IF ( ( (config_flags%mp_physics         .EQ. thompsonaero .OR. &
 				 config_flags%mp_physics         .EQ. rcon_mp_scheme &
@@ -3331,6 +3331,8 @@ integer::oops1,oops2
                   grid%tmn(i,j)=grid%tsk(i,j)
                else if(grid%sst(i,j).gt.170. .and. grid%sst(i,j).lt.400.)then
                   grid%tmn(i,j)=grid%sst(i,j)
+               else if(grid%t2(i,j).gt.170. .and. grid%t2(i,j).lt.400.)then
+                  grid%tsk(i,j)=grid%t2(i,j)
                else
                   CALL wrf_error_fatal ( 'grid%tmn unreasonable' )
                endif
@@ -3565,12 +3567,15 @@ integer::oops1,oops2
                                  grid%tslb(i,ns,j) = ( grid%tsk(i,j)*(3.0 - grid%zs(ns)) + &
                                                        grid%tmn(i,j)*(0.0 - grid%zs(ns)) ) /(3.0 - 0.0)
                               END DO
-                           CASE ( LSMSCHEME , NOAHMPSCHEME , RUCLSMSCHEME, PXLSMSCHEME,CLMSCHEME, CTSMSCHEME, SSIBSCHEME )
+                           CASE ( LSMSCHEME , NOAHMPSCHEME , RUCLSMSCHEME, CLMSCHEME, CTSMSCHEME, SSIBSCHEME )
 !                             CALL wrf_error_fatal ( 'Assigned constant soil moisture to 0.3, stopping')
                               DO ns = 1 , model_config_rec%num_soil_layers
                                  grid%tslb(i,ns,j) = ( grid%tsk(i,j)*(3.0 - grid%zs(ns)) + &
                                                        grid%tmn(i,j)*(0.0 - grid%zs(ns)) ) /(3.0 - 0.0)
                               END DO
+                           CASE ( PXLSMSCHEME )
+                              grid%tslb(i,1,j) = grid%tsk(i,j)
+                              grid%tslb(i,2,j) = grid%tmn(i,j)
                         END SELECT fake_soil_temp
                      else if(grid%tsk(i,j).gt.170. .and. grid%tsk(i,j).lt.400.)then
                         CALL wrf_error_fatal ( 'grid%tslb unreasonable 1' )
