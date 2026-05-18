@@ -50,7 +50,7 @@ CONTAINS
      &          ,pxlsm_modis_veg, ifuacm, lai_px, wwlt_px, wfc_px     & ! PX-LSM
      &          ,wsat_px, clay_px, csand_px, fmsand_px                & ! PX-LSM
      &          ,build_area_fraction, build_height, lamf              & ! P-X LSM ! UTK-Urban
-     &          ,stdir1,stdir2,blkw1,blkw2,StWd                       & ! PX UACM
+     &          ,stdir1,stdir2,blkw1,blkw2,StWd,hgtparam,lamdap       & ! PX UACM
      &          ,idveg    ,iopt_crs  ,iopt_btr  ,iopt_run  ,iopt_sfc  ,iopt_frz     &
      &          ,iopt_inf ,iopt_rad  ,iopt_alb  ,iopt_snf  ,iopt_tbot ,iopt_stc     &
      &          ,iopt_gla ,iopt_rsf  ,iopt_soil ,iopt_pedo ,iopt_crop ,iopt_irr     &
@@ -752,6 +752,8 @@ CONTAINS
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   blkw2
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   StWd 
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   RMOL
+   REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(IN)   ::   HGTPARAM
+   REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(IN)   ::   LAMDAP 
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   PBLH
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   Q2
    REAL, DIMENSION( ims:ime, jms:jme ) , INTENT(INOUT)::   QFX
@@ -3694,7 +3696,7 @@ CONTAINS
                      t2obs, q2obs, pxlsm_smois_init, pxlsm_soil_nudge,         &
                      coszen, XLAT, XLONG, SINA, COSA,                          &
                      build_area_fraction, build_height, lamf,                  & ! UTK-Urban
-                     stdir1,stdir2,blkw1,blkw2,StWd,                           & ! UACM
+                     stdir1,stdir2,blkw1,blkw2,StWd,hgtparam,lamdap,           & ! UACM
                      swddir, swddif,                                           & ! UTK-Urban
                      pxlsm_modis_veg, ifuacm, LAI_PX, WWLT_PX, WFC_PX,         &
                      WSAT_PX, CLAY_PX, CSAND_PX, FMSAND_PX,                    &
