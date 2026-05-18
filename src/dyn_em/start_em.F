@@ -1078,6 +1078,9 @@ endif
                       grid%xice,grid%xicem,grid%vegfra,grid%snow,grid%canwat,grid%smstav,         &
                       grid%smstot, grid%sfcrunoff,grid%udrunoff,grid%grdflx,grid%acsnow,      &
                       grid%acsnom,grid%ivgtyp,grid%isltyp, grid%sfcevp,grid%smois,     &
+                      grid%build_area_fraction,grid%build_height,grid%lamf,            &   ! P-X LSM  ! UTK-Urban
+                      grid%stdir1,grid%stdir2,grid%blkw1,grid%blkw2,grid%StWd,         & 
+                      grid%hgtparam,grid%lamdap,                             &
                       grid%sh2o, grid%snowh, grid%smfr3d,                    &
                       grid%snoalb,                 &
                       grid%DX,grid%DY,grid%dx2d,grid%area2d,              &
