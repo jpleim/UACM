@@ -50,7 +50,7 @@ CONTAINS
                     PXLSM_SOIL_NUDGE,                                    &
                     cosz, XLAT, XLONG, SINA, COSA,                       &   !-- DDY Urban
                     LAMP, HGTBDG, lamf,                                  &
-                    STDIR1,STDIR2,BLKW1,BLKW2,StWd,                      &
+                    STDIR1,STDIR2,BLKW1,BLKW2,StWd, HGTPARAM,LAMDAP,     &
                     SWDDIR, SWDDIF,                                      &   !-- UTK Urban
                     pxlsm_modis_veg, ifuacm,                             &
                     LAI_PX,                                              &
@@ -332,6 +332,7 @@ CONTAINS
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: HGTBDG, LAMP, LAMF
    INTEGER, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: STDIR1, STDIR2
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT)    :: BLKW1, BLKW2, StWd
+   REAL, DIMENSION( ims:ime, jms:jme ), INTENT(IN)       :: HGTPARAM, LAMDAP
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TG_RF, RADST, RADST_FNL, GSW_URB
    REAL, DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) :: TG_WL, RADWL, RADWL_FNL, GSW_WL
    DOUBLE PRECISION,  DIMENSION( ims:ime, jms:jme ), INTENT(INOUT) ::T2_RF,T2_WL,T2_GND
@@ -610,16 +611,23 @@ CONTAINS
               BB2 = blkw2(i,J)*(1-LANDUSEF(I,KWAT,J))
               VEGU_FNL(I,J)  = (0.15*LANDUSEF(I,24,J)+ 0.05*LANDUSEF(I,25,J)+ 0.01*LANDUSEF(I,26,J))/URBF2D(I,J)              
             ELSE IF (LAND_USE_TYPE=='MODISF')then 
+              IF (HGTPARAM(I,J).GT.0.1.AND.LAMDAP(I,J).GT.0.0001) then
+                HGTBDG(I,J) = HGTPARAM(I,J)
+                LAMP(I,J)   = LAMDAP(I,J)
+              ENDIF           
               IF(HGTBDG(I,J) .LT. 0.1) THEN
-                STDIR1(I,J) = 10
-                STDIR2(I,J) = 100 
                 HGTBDG(I,J) = (10.*LANDUSEF(I,31,J)+ 10.*LANDUSEF(I,33,J)+ 25.*LANDUSEF(I,32,J))/URBF2D(I,J)
-!                LAMF(I,J)   = (0.08*LANDUSEF(I,31,J)+ 0.1*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+              ENDIF
+              IF(StWd(I,J) .LT. 0.1) then
+                StWd(i,j)   = (12.*LANDUSEF(I,31,J)+ 12*LANDUSEF(I,33,J)+ 15.*LANDUSEF(I,32,J))/URBF2D(I,J)
                 blkw1(i,J) = (140.*LANDUSEF(I,31,J)+ 70.*LANDUSEF(I,33,J)+ 90.*LANDUSEF(I,32,J))/URBF2D(I,J)
                 blkw2(i,J)  = (100.*LANDUSEF(I,31,J)+ 180*LANDUSEF(I,33,J)+ 60.*LANDUSEF(I,32,J))/URBF2D(I,J)
-                StWd(i,j)   = (12.*LANDUSEF(I,31,J)+ 12*LANDUSEF(I,33,J)+ 15.*LANDUSEF(I,32,J))/URBF2D(I,J)
+                STDIR1(I,J) = 10
+                STDIR2(I,J) = 100               
               ENDIF
-              LAMP(I,J)   = (0.2*LANDUSEF(I,31,J)+ 0.3*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+              IF (LAMP(I,J).LT.0.02) then
+                LAMP(I,J)   = (0.15*LANDUSEF(I,31,J)+ 0.3*LANDUSEF(I,33,J)+ 0.4*LANDUSEF(I,32,J))/URBF2D(I,J)
+              ENDIF
               BB1 = blkw1(i,J)*(1-LANDUSEF(I,KWAT,J))
               BB2 = blkw2(i,J)*(1-LANDUSEF(I,KWAT,J))
               VEGU_FNL(I,J)  = (0.35*LANDUSEF(I,31,J)+ 0.05*LANDUSEF(I,33,J)+ 0.05*LANDUSEF(I,32,J))/URBF2D(I,J)
@@ -746,18 +754,18 @@ CONTAINS
 
           IF(PXLSM_SOIL_NUDGE .EQ. 1) THEN                   
             !-- 2 m Temp and RH for Nudging
-            T2_OLD = T2_NDG_OLD(I,J)
+            T2_OLD    = T2_NDG_OLD(I,J)
             T2_NEW     = T2_NDG_NEW(I,J)
             VAPPRS     = SVP1 * EXP(SVP2 * (T2_OLD - SVPT0) / ( T2_OLD - SVP3))
             QSBT       = EP_2 * VAPPRS / (SFCPRS - VAPPRS)          
-            RH2_OLD    = Q2_NDG_OLD(I,J) / QSBT
+            RH2_OLD    = 100.*Q2_NDG_OLD(I,J) / QSBT   ! qv in sfdda files are 100 x too low in Paris
             VAPPRS     = SVP1 * EXP(SVP2 * (T2_NEW - SVPT0) / (T2_NEW - SVP3))
             QSBT       = EP_2 * VAPPRS / (SFCPRS - VAPPRS)          
-            RH2_NEW    = Q2_NDG_NEW(I,J) / QSBT
+            RH2_NEW    = 100.*Q2_NDG_NEW(I,J) / QSBT
             RH2OBS     = CORB * RH2_OLD +  CORE * RH2_NEW  
             T2OBS(I,J) = CORB * T2_OLD +  CORE * T2_NEW
-            Q2OBS(I,J) = CORB * Q2_NDG_OLD(I,J) +  CORE * Q2_NDG_NEW(I,J)
-            SNOBS = CORB * SN_NDG_OLD(I,J) +  CORE * SN_NDG_NEW(I,J)  
+            Q2OBS(I,J) = CORB * 100.*Q2_NDG_OLD(I,J) +  CORE * 100.*Q2_NDG_NEW(I,J)
+!           SNOBS = CORB * SN_NDG_OLD(I,J) +  CORE * SN_NDG_NEW(I,J)  
           ENDIF
 
           USTAR  = MAX(UST(I,J),0.005)
@@ -940,6 +948,7 @@ CONTAINS
             GRDFLX(I,J)  = 0.0
           ELSE
             TSK(I,J)  = TSLB(I,1,J)     ! Skin temp set to 1 cm soil temperature in PX for now
+            TSLB(I,2,J) = T2_GND(I,J)
           ENDIF
           IF (ISPXURB .AND. (URBF2D(I,J) .GT. 0.0)) THEN  ! For UTK-Urban
              CANWAT(I,J) =  WR_VEG * 1000.    ! convert WR back to mm for CANWAT
@@ -1185,7 +1194,7 @@ CONTAINS
             ELSE IF(LAND_USE_TYPE == 'MODISF') THEN
               URBF = (LANDUSEF(I,31,J)+LANDUSEF(I,32,J)+LANDUSEF(I,33,J))/LUTOT 
             ENDIF
-            IF(URBF.GT.0.05) URBF2D(I,J) = URBF
+            IF(URBF.GT.0.03) URBF2D(I,J) = URBF
           ENDIF
 
           !-- Initialize 2 and 3-D veg parameters to be caculated
@@ -1720,7 +1729,8 @@ CONTAINS
       REAL, PARAMETER :: KARMAN    = 0.4 
 !      REAL, PARAMETER :: PPLNNYC   = 10430.   ! NYC pop den Sailor et al 2015
       REAL, PARAMETER :: PPLNCITY   = 3550.   ! Paris pop den Sailor et al 2015
-      REAL, PARAMETER :: Qfmax     = 63.      ! NYC
+!      REAL, PARAMETER :: Qfmax     = 63.      ! NYC
+      REAL, PARAMETER :: Qfmax     = 39.95    ! Paris winter
       REAL, PARAMETER :: Fveh      = 0.39
       REAL, DIMENSION(24) :: ProHr    ! Summer
       DATA PROHR/0.25,0.23,0.25,0.21,0.22,0.29,0.53,0.82,0.87,0.80,0.80,0.84,    &
@@ -2281,11 +2291,13 @@ CONTAINS
               RW = (WLALB*RADWL + WLALB*SWDIFWL)                            ! First reflected part from the wall 
 
               MW = ( RW + SKVFWL*WLALB*RR ) / ( 1.0 - (1.0 - 2.0*SKVFWL)*WLALB + (1.0 - SKVFRD)*SKVFWL*RDALBBR*WLALB )                                      ! Multiple reflections (infinite times) from the walls 
-              MR = ( RR + (1.0 - SKVFRD)*RDALBBR*(RW + (SKVFWL*WLALB*RR)) ) / ( 1.0 - (1.0 - 2.0*SKVFWL)*WLALB + (1.0 - SKVFRD)*SKVFWL*RDALBBR*WLALB )      ! Multiple reflections (infinite times) from the road
-
+              MR = ( RR + (1.0 - SKVFRD)*RDALBBR*(RW + (SKVFWL*WLALB*RR)) ) / ( 1.0 -  &
+                   (1.0 - 2.0 * SKVFWL) * WLALB + (1.0 - SKVFRD)*SKVFWL*RDALBBR*WLALB )      ! Multiple reflections (infinite times) from the road
+ 
               RADST_FNL = (1.0 - RDALBBR)*RADST + (1.0 - RDALBBR)*SWDIFRD + (1.0 - RDALBBR)*(1.0 - SKVFRD)*MW                                            ! Total SW radiation absorbed by the road surface
-              RADWL_FNL = (1.0 - WLALB)*RADWL + (1.0 - WLALB)*SWDIFWL + (1.0 - WLALB)*(1.0 - 2.0*SKVFWL)*MW + (1.0 - WLALB)*SKVFWL*MR                    ! Total SW radiation absorbed by the walls surface
-
+              RADWL_FNL = (1.0 - WLALB)*RADWL + (1.0 - WLALB)*SWDIFWL + (1.0 - WLALB)*  &
+                   (1.0 - 2.0*SKVFWL)*MW + (1.0 - WLALB)*SKVFWL*MR                    ! Total SW radiation absorbed by the walls surface
+             
               GSW_URB = URBF*RADST_FNL + (1.0-URBF)*SOLDN*(1.0-ALB)        ! Total SW radiation absorbed at the ground in an urban grid cell
               GSW_WL  = RADWL_FNL                                          ! Total SW radiation absorbed at the walls in an urban grid cell
 !            IF(HGTBDG.GT.40.0.AND.SWDDIR.GT.200.)print*,' HGTBDG,SWDDIR=',HGTBDG,SWDDIR,RADWL
@@ -2331,17 +2343,16 @@ CONTAINS
 
            !-- Diagnostic Outputs
            LWDN_URB   = RDEMISSIBR * SKVFRD * LWDN + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * SKVFWL * LWDN
-           LWUP_URB   = RDEMISSIBR * STBOLT *(TGU**4) + RDEMISSIBR * WLEMISSI * (1.0 - SKVFRD) * STBOLT * TG_WL**4                     &
-                        + RDEMISSIBR * WLEMISSI * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4          &
-                        + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSIBR * TGU**4   &
-                         + SNOW_FRA * SNEMISSI * TGU**4)
-           RADNET_URB = GSW_URB + RDEMISSIBR * SKVFRD * LWDN + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD)                        &
-                        * SKVFWL * LWDN - RDEMISSIBR * STBOLT * (TGU**4)                                                             &
-                        + RDEMISSIBR * WLEMISSI * (1.0 - SKVFRD) * STBOLT * TG_WL**4 + RDEMISSIBR * WLEMISSI * (1.0 - WLEMISSI)       &
-                         * (1.0 - SKVFRD) * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4    &
-                        + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSIBR * TGU**4   &
-                         + SNOW_FRA * SNEMISSI * TGU**4) 
-
+           LWUP_URB   = RDEMISSIBR * STBOLT *(TGU**4) + RDEMISSIBR * WLEMISSI * (1.0 - SKVFRD) * STBOLT * TG_WL**4            &
+                        + RDEMISSIBR * WLEMISSI * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4  &
+                        + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSIBR   &
+                        * TGU**4  + SNOW_FRA * SNEMISSI * TGU**4)
+           RADNET_URB = GSW_URB + RDEMISSIBR * SKVFRD * LWDN + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD)                 &
+                        * SKVFWL * LWDN - RDEMISSIBR * STBOLT * (TGU**4)                                                      &
+                        + RDEMISSIBR * WLEMISSI * (1.0 - SKVFRD) * STBOLT * TG_WL**4 + RDEMISSIBR * WLEMISSI                  &
+                        * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4                          &
+                        + RDEMISSIBR * (1.0 - WLEMISSI) * (1.0 - SKVFRD) * SKVFWL * STBOLT * ((1.0 - SNOW_FRA)                &
+                        * RDEMISSIBR * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4) 
 
            !-----------------------------------------------------------------------------------
            !-- Computation of Urban Walls Temperature, Solving by CRANK-NIC Implicit method:
@@ -2383,21 +2394,23 @@ CONTAINS
            T2_WL = T2NEW_WL 
 
            !-- Diagnostic Outputs
-           LWDN_WL   = WLEMISSI * SKVFWL * LWDN + WLEMISSI * (1.0 - RDEMISSIBR) * SKVFWL * SKVFRD * LWDN    &
+           LWDN_WL   = WLEMISSI * SKVFWL * LWDN + WLEMISSI * (1.0 - RDEMISSIBR) * SKVFWL * SKVFRD * LWDN                &
                        + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL * (1.0 - 2.0*SKVFWL) * LWDN 
-           LWUP_WL   = WLEMISSI * STBOLT * (TG_WL**4) + WLEMISSI * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI      &
+           LWUP_WL   = WLEMISSI * STBOLT * (TG_WL**4) + WLEMISSI * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI       &
                         * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)   &
-                       + WLEMISSI**2 * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4 + WLEMISSI**2 * (1.0 - WLEMISSI) * (1.0 - 2.0*SKVFWL)**2 * STBOLT * TG_WL**4     &
-                       + WLEMISSI**2 * (1.0 - RDEMISSIBR) * SKVFWL * (1.0 - SKVFRD) * STBOLT * TG_WL**4     &
-                       + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL * (1.0 - 2.0*SKVFWL) * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)   
-           RADNET_WL = GSW + WLEMISSI * SKVFWL * LWDN + WLEMISSI * (1.0 - RDEMISSIBR) * SKVFWL * SKVFRD * LWDN         &
-                       + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL * (1.0 - 2.0*SKVFWL) * LWDN    &
-                       - WLEMISSI * STBOLT * (TG_WL**4) + WLEMISSI * STBOLT * (TG_WL**4) + WLEMISSI * SKVFWL * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI           &
-                        * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)   &
-                       + WLEMISSI**2 * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4 + WLEMISSI**2 * (1.0 - WLEMISSI) * (1.0 - 2.0*SKVFWL)**2 * STBOLT * TG_WL**4     &
-                       + WLEMISSI**2 * (1.0 - RDEMISSIBR) * SKVFWL * (1.0 - SKVFRD) * STBOLT * TG_WL**4     &
-                       + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL * (1.0 - 2.0*SKVFWL) * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)  
-
+                       + WLEMISSI**2 * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4 + WLEMISSI**2 * (1.0 - WLEMISSI)          &
+                       * (1.0 - 2.0*SKVFWL)**2 * STBOLT * TG_WL**4  + WLEMISSI**2 * (1.0 - RDEMISSIBR)                  &
+                       * SKVFWL * (1.0 - SKVFRD) * STBOLT * TG_WL**4 + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL             &
+                       * (1.0 - 2.0*SKVFWL) * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)  
+                        
+           RADNET_WL = GSW + WLEMISSI * SKVFWL * LWDN + WLEMISSI * (1.0 - RDEMISSIBR) * SKVFWL * SKVFRD * LWDN          &
+                       + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL * (1.0 - 2.0*SKVFWL) * LWDN - WLEMISSI * STBOLT           &
+                       * (TG_WL**4) + WLEMISSI * STBOLT * (TG_WL**4) + WLEMISSI * SKVFWL * STBOLT                       &
+                       * ((1.0 - SNOW_FRA) * RDEMISSI * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4) + WLEMISSI**2            &
+                       * (1.0 - 2.0*SKVFWL) * STBOLT * TG_WL**4 + WLEMISSI**2 * (1.0 - WLEMISSI)                        &
+                       * (1.0 - 2.0*SKVFWL)**2 * STBOLT * TG_WL**4  + WLEMISSI**2 * (1.0 - RDEMISSIBR)                  &
+                       * SKVFWL * (1.0 - SKVFRD) * STBOLT * TG_WL**4 + WLEMISSI * (1.0 - WLEMISSI) * SKVFWL             &
+                       * (1.0 - 2.0*SKVFWL) * STBOLT * ((1.0 - SNOW_FRA) * RDEMISSI * TGU**4 + SNOW_FRA * SNEMISSI * TGU**4)  
 
         ENDIF   ! Urban
 
@@ -3156,6 +3169,103 @@ CONTAINS
 
     END SUBROUTINE pxsnow
 !------------------------------------------------------------------------------------------
+  SUBROUTINE PXLSMINIT(VEGFRA,SNOW,SNOWC,SNOWH,CANWAT,SMSTAV,    &
+                     SMSTOT, SFCRUNOFF,UDRUNOFF,ACSNOW,        &
+                     ACSNOM,IVGTYP,ISLTYP,TSLB,SMOIS,SH2O,ZS,DZS, &
+                     MMINLU,BUILD_AREA_FRACTION ,BUILD_HEIGHT, &
+                     LAMF,STDIR1, STDIR2,BLKW1, BLKW2,StWd,    &
+                     hgtparam,lamdap,                          & 
+                     SNOALB, FNDSOILW, FNDSNOWH, RDMAXALB,     &
+                     num_soil_layers, restart,                 &
+                     allowed_to_read ,                         &
+                     irr_rand_field,irr_ph,irr_freq,           &
+                     ids,ide, jds,jde, kds,kde,                &
+                     ims,ime, jms,jme, kms,kme,                &
+                     its,ite, jts,jte, kts,kte                 &                     
+                    )
+
+   INTEGER,  INTENT(IN   )   ::     ids,ide, jds,jde, kds,kde,  &
+                                    ims,ime, jms,jme, kms,kme,  &
+                                    its,ite, jts,jte, kts,kte
+
+   INTEGER, INTENT(IN)       ::     num_soil_layers
+
+   LOGICAL , INTENT(IN) :: restart , allowed_to_read
+
+   REAL,    DIMENSION( num_soil_layers), INTENT(INOUT) :: ZS, DZS
+
+   REAL,    DIMENSION( ims:ime, num_soil_layers, jms:jme )    , &
+            INTENT(INOUT)    ::                          SMOIS, &  !Total soil moisture
+                                                         SH2O,  &  !liquid soil moisture
+                                                         TSLB      !STEMP
+
+   REAL,    DIMENSION( ims:ime, jms:jme )                     , &
+            INTENT(INOUT)    ::                           SNOW, &
+                                                         SNOWH, &
+                                                         SNOWC, &
+                                                        SNOALB, &
+                                                        CANWAT, &
+                                                        SMSTAV, &
+                                                        SMSTOT, &
+                                                     SFCRUNOFF, &
+                                                      UDRUNOFF, &
+                                                        ACSNOW, &
+                                                        VEGFRA, &
+                                                        ACSNOM, &
+            BUILD_AREA_FRACTION ,BUILD_HEIGHT,LAMF,BLKW1, BLKW2,StWd
+    REAL,   DIMENSION( ims:ime, jms:jme ), INTENT(IN)    :: hgtparam,lamdap
+
+   INTEGER, DIMENSION( ims:ime, jms:jme )                     , &
+            INTENT(IN)       ::                         IVGTYP, &
+                                                        ISLTYP, &
+                                                        STDIR1,STDIR2
+   CHARACTER(LEN=*),  INTENT(IN)      ::                MMINLU
+
+   LOGICAL, INTENT(IN)       ::                      FNDSOILW , &
+                                                     FNDSNOWH
+   LOGICAL, INTENT(IN)       ::                      RDMAXALB
+
+
+   INTEGER                   :: L
+   REAL                      :: BX, SMCMAX, PSISAT, FREE
+   REAL, PARAMETER           :: BLIM = 5.5, HLICE = 3.335E5,    &
+                                GRAV = 9.81, T0 = 273.15
+   INTEGER                   :: errflag
+   CHARACTER(LEN=80)         :: err_message
+   INTEGER,DIMENSION(ims:ime, jms:jme ),INTENT(INOUT):: irr_rand_field   
+   INTEGER , DIMENSION(jds:jde) :: my_seeds  
+   INTEGER :: irr_ph,irr_freq         
+
+
+
+   IF(.not.restart)THEN
+   
+
+   itf=min0(ite,ide-1)
+   jtf=min0(jte,jde-1)
+
+
+! initialize soil liquid water content SH2O
+
+
+! initialize canopy water to ZERO
+
+!          GO TO 110
+!         print*,'Note that canopy water content (CANWAT) is set to ZERO in LSMINIT'
+          DO J = jts,jtf
+          DO I = its,itf
+            CANWAT(I,J)=0.0
+            BUILD_AREA_FRACTION(I,J) = 0.01
+!            StWd(I,J)=12.
+          ENDDO
+          ENDDO
+ 110      CONTINUE
+
+   ENDIF
+!------------------------------------------------------------------------------
+  END SUBROUTINE pxlsminit
+!------------------------------------------------------------------------------
+
 !------------------------------------------------------------------------------------------
 
 END MODULE module_sf_pxlsm
