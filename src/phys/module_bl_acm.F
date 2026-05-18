@@ -259,7 +259,7 @@ CONTAINS
               ,cosz=cosz(ims,j),swdown=swdown(ims,j)               & ! DDY urban
               ,lamp=lamp(ims,j), HGTBDG=BUILD_HEIGHT(ims,j), lamf=lamf(ims,j) &
               ,stdir1=stdir1(ims,j), stdir2=stdir2(ims,j)          &
-              ,blkw1=blkw1(ims,j), blkw2=blkw2(ims,j), wstt=StWd(ims,j)  &
+              ,blkw1=blkw1(ims,j), blkw2=blkw2(ims,j), Stwd=StWd(ims,j)  &
               ,UST_WL=UST_WL(ims,kms,j),UST_RF=UST_RF(ims,j)       &
               ,UST_ST=UST_ST(ims,j),IFUACM=ifuacm                  &
               ,ids=ids,ide=ide, jds=jds,jde=jde, kds=kds,kde=kde   &
@@ -352,7 +352,7 @@ CONTAINS
       REAL, DIMENSION( ims:ime ), INTENT(IN)           :: COSZ, SWDOWN
       REAL, DIMENSION( ims:ime ), INTENT(IN)           :: lamp, HGTBDG, lamf
       INTEGER, DIMENSION( ims:ime ), INTENT(IN)        :: stdir1, stdir2
-      REAL, DIMENSION( ims:ime ), INTENT(IN)           :: blkw1, blkw2, wstt
+      REAL, DIMENSION( ims:ime ), INTENT(IN)           :: blkw1, blkw2, stwd
       logical :: restart
 
 !--------------------------------------------------------------------
@@ -465,7 +465,7 @@ CONTAINS
               STOP ' NLCAT SHOULD BE 40 OR 33'
             ENDIF
           ENDIF
-          IF(URBF(I).LT.0.05) URBF(I)=-1.0
+          IF(URBF(I).LT.0.03) URBF(I)=-1.0
         ENDDO
       ENDIF
 
@@ -695,7 +695,7 @@ CONTAINS
                    MIXLKZ, IMU, EXU, IMV, EXV,                      & !--DDY urban 
                    UST_WL,UST_RF,UST_ST,                            &
                    ispxurb,lamp, HGTBDG, lamf,                      &
-                   stdir1,stdir2,blkw1,blkw2,wstt,                  &
+                   stdir1,stdir2,blkw1,blkw2,stwd,                  &
                    ims,ime, kms,kme, jms,jme, its,ite, kts,kte,j)
      endif
 
@@ -704,7 +704,7 @@ CONTAINS
                 US,    VS,  TT,  THETAV, DENSX, PSTAR,              &
                 QVS,   QCS, QIS, G, RD, CPAIR,                      &
                 EDDYZ, EDDYZM,                                      &
-                MIXLKZ, ispxurb, KSL,wstt,                          & !--DDY urban
+                MIXLKZ, ispxurb, KSL,stwd,                          & !--DDY urban
                 its,ite, kts,kte, ims,ime, kms,kme)
 
      CALL ACM(DTPBL, PSTAR,  NOCONV, ZF, DZH, DZHI, J,              &
@@ -839,7 +839,7 @@ CONTAINS
                     US,    VS,  TT,  THETAV, DENSX, PSTAR,            &
                     QVS,   QCS, QIS, G, RD, CPAIR,                    &
                     EDDYZ, EDDYZM,                                    &
-                    MIXLKZ,   ispxurb,  KSL,wstt,                     & !-- DDY urban
+                    MIXLKZ,   ispxurb,  KSL, stwd,                    & !-- DDY urban
                     its,ite, kts,kte, ims,ime, kms,kme )
 
 
@@ -881,9 +881,9 @@ CONTAINS
 !... Integer
       INTEGER, INTENT(IN)   :: its, ite, kts, kte, ims, ime, kms, kme
 !... Real
-      REAL, DIMENSION( ims:ime ),          INTENT(IN)    :: PBL, UST, UST_RF, UST_ST
+      REAL, DIMENSION( ims:ime ),          INTENT(IN)    :: PBL, UST, UST_RF, UST_ST, STWD
       REAL,                                INTENT(IN)    :: DTPBL, G, RD
-      REAL, DIMENSION( its:ite ),          INTENT(IN)    :: MOL, PSTAR, CPAIR, USTT,wstt
+      REAL, DIMENSION( its:ite ),          INTENT(IN)    :: MOL, PSTAR, CPAIR, USTT
 
       REAL, DIMENSION( ims:ime, kms:kme ), INTENT(IN)    :: US,VS, TT,   &
                                                             QVS, QCS, QIS, DENSX, UST_WL
@@ -946,8 +946,13 @@ CONTAINS
             USTK = UST(I)
           ENDIF
           MIXLKZ(I,K) = KARMAN * ZF(I,K)
-          MIXWL = 0.0
-          IF(ispxurb) MIXWL = 1./(1./ZF(I,K) + 1./WSTT(I))     
+          IF(ispxurb) Then
+            if(StWd(I).lt.0.00001) then
+               MIXWL = 0.0
+            else
+               MIXWL = 1./(1./MIXLKZ(I,K) + 1./StWd(i)) 
+            endif
+          endif
 !--------------------------------------------------------------------------
           IF (ZF(I,K) .LT. PBL(I)) THEN
             ZOVL = ZF(I,K) / MOL(I)
@@ -1307,7 +1312,7 @@ CONTAINS
        
       DO I = its,ILX 
         IF (NOCONV(I) .EQ. 1) THEN
-          KCBLMX = AMAX0(KLPBL(I),KCBLMX)
+          KCBLMX = MAX0(KLPBL(I),KCBLMX)
           RZ     = (ZF(i,KCBL(I)) - ZF(i,1)) * DZHI(i,1)
           DTLIM(I)  = AMIN1(XX / (MBARKS(1,I) * RZ),DTLIM(I))
         ENDIF
@@ -1679,7 +1684,7 @@ CONTAINS
        
       DO I = its,ILX 
         IF (NOCONV(I) .EQ. 1) THEN
-          KCBLMX = AMAX0(KLPBL(I),KCBLMX)
+          KCBLMX = MAX0(KLPBL(I),KCBLMX)
           RZ     = (ZF(i,KCBL(I)) - ZF(i,1)) * DZHI(i,1)
           DTLIM(I)  = AMIN1(XX / (MBARKS(1,I) * RZ),DTLIM(I))
         ENDIF
@@ -2049,7 +2054,7 @@ CONTAINS
                         MIXLKZ, IMU, EXU, IMV, EXV,                &
                         UST_WL,UST_RF,UST_ST,                      &
                         ispxurb,lamp, HGTBDG, lamf,                &
-                        stdir1,stdir2,blkw1,blkw2,wstt,            &
+                        stdir1,stdir2,blkw1,blkw2,StWd,            &
                         ims,ime,kms,kme,jms,jme,its,ite,kts,kte,j)
 !-----------------------------------------------------------------------
 !-----------------------------------------------------------------------
@@ -2131,7 +2136,7 @@ CONTAINS
       INTEGER, DIMENSION( ims:ime ), INTENT(IN) :: STDIR2
       REAL, DIMENSION( ims:ime ), INTENT(IN) :: BLKW1
       REAL, DIMENSION( ims:ime ), INTENT(IN) :: BLKW2
-      REAL, DIMENSION( ims:ime ), INTENT(IN) :: WSTT
+      REAL, DIMENSION( ims:ime ), INTENT(IN) :: StWd
       REAL, DIMENSION( its:ite ) :: STANG  ! street angle (true bearing [deg])
 
       !-- physical properties
@@ -2168,15 +2173,11 @@ CONTAINS
       LOGICAL :: eof
       logical,intent(in) :: ispxurb
       INTEGER :: stat, c2, r
-      REAL, SAVE :: h(1:350,1:400), lf(1:350,1:400), lp(1:350,1:400), st(1:350,1:400)
-      REAL :: data(5)   ! *IMPORTANT NOTE*:- Change the array dim. accord. to dim. of data 
-!      REAL, SAVE :: H2, LF2, LP2, STANG2
-!      REAL, DIMENSION( ims:ime ) :: STANG2  ! street angle (true bearing [rad])
       REAL :: STANGX
       INTEGER :: IDIR,ihr
 ! testing
       real UST_ST_U,UST_ST_V,UST_RF_U,UST_RF_V,UST_WL_U,UST_WL_V
-      real time,USTWL2
+      real time,USTWL2, WSTT
       LOGICAL :: LCZRUN = .TRUE.
 !
 !------------------Executables start here-----------------------
@@ -2214,6 +2215,7 @@ CONTAINS
           !--DDY urban calculate urban fractions for USGS-landuse only (NOW)
           URBF(I) = 0.0
           LUTOT   = 0.0
+          WSTT = StWd(I)
           DO NL = 1,  NLCAT
             LUTOT = LUTOT + LANDUSEF(I,NL)
           ENDDO
@@ -2241,15 +2243,16 @@ CONTAINS
             !-- convert urban morphology input parameters into building width and street width
 !            BBDG   = 60.  !(LAMP(I) / LAMF(I)) * HGTBDG(I)
 !            WSTT   = 20.  !(1.0 / SQRT(LAMP(I)) - 1.0) * BBDG
+            if(wstt.lt.0.001) Cycle
             IF(LCZRUN) then
-              BB1 = blkw1(i) - WSTT(I)
-              BB2 = blkw2(i) - WSTT(I)
+              BB1 = blkw1(i) - WSTT
+              BB2 = blkw2(i) - WSTT
             else
-              BB1 = max(blkw1(i)*(1-fwat) - WSTT(I),10.)
-              BB2 = max(blkw2(i)*(1-fwat) - WSTT(I),10.)
+              BB1 = max(blkw1(i)*(1-fwat) - WSTT,10.)
+              BB2 = max(blkw2(i)*(1-fwat) - WSTT,10.)
             endif
-            RBPW1   = 1.0 / (BB1 + WSTT(I))
-            RBPW2   = 1.0 / (BB2 + WSTT(I))
+            RBPW1   = 1.0 / (BB1 + WSTT)
+            RBPW2   = 1.0 / (BB2 + WSTT)
 !            STANG2(I) = STANG(I)*PI/180.
             !-- calculate each level height                   
 !            if(BB1.gt.444..or.BB2.gt.444.) print *, ' BB1, BB2=', BB1,BB2
@@ -2356,22 +2359,22 @@ CONTAINS
 !                  VL(K) = 1. - GAMDIS * BBDG * RBPW
 !                  AA    = URBF(I) / VL(K) * RBPW
 !                  IF (VL(K) .NE. 0.0) AA    = URBF(I) / VL(K) * RBPW  ! temp hack
-!                  CO1   = WSTT(I) * AA
+!                  CO1   = WSTT * AA
                   CO1   = URBF(I) * (1. - LAMP(I))/(1-gamdis*LAMP(I))
                   CO3   = URBF(I) * LAMP(I)
 
                 USTWL2 = 0.0
                 DO idir = 1,2  ! 2 street dir
 !                  CO2   = DZF(I,K) * GAMDIS * AA
-!                  CO2   = DZF(I,K) * GAMDIS * URBF(I) / ((WSTT(I)+BBDG) - BBDG**2 * RBPW)
-!                  CO2   = 2. * DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT(I)*RBPW1)*RBPW2
+!                  CO2   = DZF(I,K) * GAMDIS * URBF(I) / ((WSTT+BBDG) - BBDG**2 * RBPW)
+!                  CO2   = 2. * DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT*RBPW1)*RBPW2
 !                  CO3   = BBDG * AA
                 IF(idir.eq.1) Then
                    STANGX = float(stdir1(i))
-                   CO2   = DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT(I)*RBPW2)*RBPW1/(1. - LAMP(I))
+                   CO2   = DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT*RBPW2)*RBPW1/(1. - LAMP(I))
                 Else
                    STANGX = float(stdir2(i))
-                   CO2   = DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT(I)*RBPW1)*RBPW2/(1. - LAMP(I))
+                   CO2   = DZF(I,K) * GAMDIS * URBF(I) * (1. - WSTT*RBPW1)*RBPW2/(1. - LAMP(I))
                 EndIf
                 STANGX = STANGx*PI/180.
                   MORT1 = ABS(COS(STANGX) * US(I,K) - SIN(STANGX) * VS(I,K))
