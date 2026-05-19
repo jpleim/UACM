@@ -297,7 +297,7 @@ CONTAINS
               ,nlcat, landusef                                     & ! DDY urban 
               ,cosz, swdown                                        & ! DDY urban
               ,lamp, HGTBDG, lamf                                  &
-              ,stdir1, stdir2, blkw1, blkw2,wstt                   &
+              ,stdir1, stdir2, blkw1, blkw2,stwd                   &
               ,UST_WL,UST_RF,UST_ST,IFUACM                         &
               ,ids,ide, jds,jde, kds,kde                           &
               ,ims,ime, jms,jme, kms,kme                           &
@@ -704,7 +704,7 @@ CONTAINS
                 US,    VS,  TT,  THETAV, DENSX, PSTAR,              &
                 QVS,   QCS, QIS, G, RD, CPAIR,                      &
                 EDDYZ, EDDYZM,                                      &
-                MIXLKZ, ispxurb, KSL,stwd,                          & !--DDY urban
+                MIXLKZ, ispxurb, KSL, stwd,                         & !--DDY urban
                 its,ite, kts,kte, ims,ime, kms,kme)
 
      CALL ACM(DTPBL, PSTAR,  NOCONV, ZF, DZH, DZHI, J,              &
