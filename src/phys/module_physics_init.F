@@ -1435,6 +1435,9 @@ CHARACTER(LEN=8) :: name
                 SNOW,SNOWC, CANWAT,SMSTAV,                      &
                 SMSTOT, SFCRUNOFF,UDRUNOFF,ACSNOW,ACSNOM,       &
                 IVGTYP,ISLTYP,ISURBAN,SMOIS,SMFR3D,MAVAIL,      &
+                BUILD_AREA_FRACTION ,BUILD_HEIGHT,              &
+                LAMF,STDIR1, STDIR2,BLKW1, BLKW2,StWd,          &
+                HGTPARAM, LAMDAP,                               &
                 SNOWH,SH2O,SNOALB,FNDSOILW,FNDSNOWH,RDMAXALB,   &
 #if (NMM_CORE == 1)
                 Z0,XLAND,XICE,                                  &
@@ -2470,6 +2473,9 @@ CHARACTER(LEN=8) :: name
                 SNOW,SNOWC, CANWAT,SMSTAV,                      &
                 SMSTOT, SFCRUNOFF,UDRUNOFF,ACSNOW,ACSNOM,       &
                 IVGTYP,ISLTYP,ISURBAN,SMOIS,SMFR3D,mavail,      &
+                BUILD_AREA_FRACTION ,BUILD_HEIGHT,              &
+                LAMF,STDIR1, STDIR2,BLKW1, BLKW2,StWd,          &   
+                HGTPARAM, LAMDAP,                               &      
                 SNOWH,SH2O,SNOALB,FNDSOILW,FNDSNOWH,RDMAXALB,   &
 #if  ( NMM_CORE == 1 )
                 Z0,XLAND,XICE,DX,DY,                            &
@@ -2708,7 +2714,8 @@ CHARACTER(LEN=8) :: name
 
    REAL,     DIMENSION( ims:ime , 1:num_soil_layers , jms:jme ),&
                    INTENT(INOUT) :: SMOIS,SH2O,TSLB
-
+   REAL,    DIMENSION( ims:ime, jms:jme )                     , &
+            INTENT(IN)    ::                     HGTPARAM, LAMDAP
    REAL,    DIMENSION( ims:ime, jms:jme )                     , &
             INTENT(INOUT)    ::                           SNOW, &
                                                          SNOWH, &
@@ -2726,6 +2733,8 @@ CHARACTER(LEN=8) :: name
                                                         SFCEVP, &
                                                         GRDFLX, &
                                                            UST, &
+           BUILD_AREA_FRACTION ,BUILD_HEIGHT,LAMF,BLKW1, BLKW2,StWd,  &                                          
+
 #if ( NMM_CORE == 1 )
                                                             Z0, &
 #else
@@ -2737,8 +2746,8 @@ CHARACTER(LEN=8) :: name
    INTEGER, DIMENSION( ims:ime, jms:jme )                     , &
             INTENT(INOUT)    ::                         IVGTYP, &
                                                         ISLTYP, &
-                                                        LOWLYR
-
+                                                        LOWLYR, &
+                                                        STDIR1,STDIR2
 
    REAL,     DIMENSION(1:num_soil_layers), INTENT(INOUT)  ::  ZS,DZS
 
@@ -3524,12 +3533,14 @@ CALL lsm_mosaic_init(IVGTYP,config_flags%ISWATER,config_flags%ISURBAN,config_fla
              config_flags%num_land_cat .ne. 24 .and. config_flags%num_land_cat .ne. 28 .and. & ! USGS
              config_flags%num_land_cat .ne. 40 .and. config_flags%num_land_cat .ne. 50 .and. & ! NLCD
              config_flags%num_land_cat .ne. 61 .and. config_flags%num_land_cat .ne. 51 .and. & ! MODIS W/LCZ 
-             config_flags%num_land_cat .ne. 33 )                                               ! MODIS-CORINE
+             config_flags%num_land_cat .ne. 33 )                                             & ! MODIS-CORINE
           CALL wrf_error_fatal ( 'module_physics_init: PX LSM option requires USGS, MODIS, or NLCD' )
-          CALL LSMINIT(VEGFRA,SNOW,SNOWC,SNOWH,CANWAT,SMSTAV,  &
+          CALL PXLSMINIT(VEGFRA,SNOW,SNOWC,SNOWH,CANWAT,SMSTAV,  &
                      SMSTOT, SFCRUNOFF,UDRUNOFF,ACSNOW,        &
                      ACSNOM,IVGTYP,ISLTYP,TSLB,SMOIS,SH2O,ZS,DZS, &
-                     MMINLU,                                   &
+                     MMINLU,BUILD_AREA_FRACTION ,BUILD_HEIGHT, & 
+                     LAMF,STDIR1, STDIR2,BLKW1, BLKW2,StWd,    &
+                     hgtparam,lamdap,                          & 
                      SNOALB, FNDSOILW, FNDSNOWH, RDMAXALB,     &
                      num_soil_layers, restart,                 &
                      allowed_to_read ,                         &
