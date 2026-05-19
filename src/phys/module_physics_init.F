@@ -87,6 +87,9 @@ CONTAINS
                          XICE,XICEM,VEGFRA,SNOW,CANWAT,SMSTAV,   &
                          SMSTOT, SFCRUNOFF,UDRUNOFF,GRDFLX,ACSNOW,&
                          ACSNOM,IVGTYP,ISLTYP, SFCEVP, SMOIS,    &
+                         BUILD_AREA_FRACTION ,BUILD_HEIGHT,      &
+                         LAMF,STDIR1, STDIR2,BLKW1, BLKW2,StWd,  &
+                         hgtparam,lamdap,                        &
                          SH2O, SNOWH, SMFR3D,                    &  ! temporary
                          SNOALB,                                 &
                          DX,DY,DX2D,AREA2D,                      &
@@ -367,7 +370,11 @@ CONTAINS
                                                           XICE, &
                                                          XICEM, &
                                                         VEGFRA, &
-                                                        ACSNOM
+                                                        ACSNOM, &
+            BUILD_AREA_FRACTION ,BUILD_HEIGHT,LAMF,BLKW1, BLKW2,StWd
+            
+   REAL,    DIMENSION( ims:ime, jms:jme ), INTENT(IN)   :: hgtparam,lamdap
+                                            
    REAL,    DIMENSION( ims:ime, jms:jme ), OPTIONAL, INTENT(INOUT) ::   rliq    
 
    REAL,    DIMENSION( ims:ime, jms:jme )                     , &
@@ -377,7 +384,8 @@ CONTAINS
 
    INTEGER, DIMENSION( ims:ime, jms:jme )                     , &
             INTENT(INOUT)    ::                         IVGTYP, &
-                                                        ISLTYP
+                                                        ISLTYP, &
+                                                        STDIR1,STDIR2
    REAL,    DIMENSION( ims:ime, jms:jme )                     , &
             OPTIONAL, INTENT(IN)    ::                     U10, &
                                                            V10
