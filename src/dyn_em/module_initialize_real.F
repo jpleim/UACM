@@ -3304,6 +3304,8 @@ integer::oops1,oops2
                      grid%tsk(i,j)=grid%tmn(i,j)
                   else if(grid%sst(i,j).gt.170. .and. grid%sst(i,j).lt.400.)then
                      grid%tsk(i,j)=grid%sst(i,j)
+                  else if(grid%t2(i,j).gt.170. .and. grid%t2(i,j).lt.400.)then
+                     grid%tsk(i,j)=grid%t2(i,j)
                   else
                      CALL wrf_error_fatal ( 'grid%tsk unreasonable' )
                   end if
@@ -3331,8 +3333,6 @@ integer::oops1,oops2
                   grid%tmn(i,j)=grid%tsk(i,j)
                else if(grid%sst(i,j).gt.170. .and. grid%sst(i,j).lt.400.)then
                   grid%tmn(i,j)=grid%sst(i,j)
-               else if(grid%t2(i,j).gt.170. .and. grid%t2(i,j).lt.400.)then
-                  grid%tsk(i,j)=grid%t2(i,j)
                else
                   CALL wrf_error_fatal ( 'grid%tmn unreasonable' )
                endif
