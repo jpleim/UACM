@@ -1296,7 +1296,7 @@ CONTAINS
        
       DO I = its,ILX 
         IF (NOCONV(I) .EQ. 1) THEN
-          KCBLMX = AMAX0(KLPBL(I),KCBLMX)
+          KCBLMX = MAX0(KLPBL(I),KCBLMX)
           RZ     = (ZF(i,KCBL(I)) - ZF(i,1)) * DZHI(i,1)
           DTLIM(I)  = AMIN1(XX / (MBARKS(1,I) * RZ),DTLIM(I))
         ENDIF
@@ -1668,7 +1668,7 @@ CONTAINS
        
       DO I = its,ILX 
         IF (NOCONV(I) .EQ. 1) THEN
-          KCBLMX = AMAX0(KLPBL(I),KCBLMX)
+          KCBLMX = MAX0(KLPBL(I),KCBLMX)
           RZ     = (ZF(i,KCBL(I)) - ZF(i,1)) * DZHI(i,1)
           DTLIM(I)  = AMIN1(XX / (MBARKS(1,I) * RZ),DTLIM(I))
         ENDIF
