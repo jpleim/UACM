@@ -1450,7 +1450,7 @@ CONTAINS
           !-- UTK Urban --addition of rooftop and wall fluxes
           IF (ispxurb .AND. URBF(I) .GT. 0.0) THEN
             DO L = 1,NSPX
-              DI(L,CNP) = DI(L,CNP) - FS_RF(L,I) * DZHI(i,CNP) * DTS
+              DI(L,CNP) = DI(L,CNP) + FS_RF(L,I) * DZHI(i,CNP) * DTS
             ENDDO
 
             DO L = 1,NSPX
