@@ -218,8 +218,8 @@
      &           (/ 0.50,    ! shrubland
      &              0.50,    ! shrubland
      &              0.75,    ! barrenland
-     &              0.75,    ! barrenland
-     &              0.75,    ! barrenland
+     &              0.50,    ! shrubland
+     &              0.50,    ! shrubland
      &              0.75,    ! barrenland
      &              0.75 /)  ! barrenland
 
